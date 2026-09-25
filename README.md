@@ -9,7 +9,7 @@
 [![CI](https://github.com/ZeroClave/zeroclave-dsh-privacy/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZeroClave/zeroclave-dsh-privacy/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-0ca66d.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/DeepSeek%20Harness-Web%20%7C%20Desktop%20Web%20Surface-1769d1.svg)](https://github.com/deepseek-ai/deepseek-harness)
-[![Version](https://img.shields.io/badge/version-alpha.24-f0a51b.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-alpha.25-f0a51b.svg)](package.json)
 
 [🚀 上传到 DeepSeek Stream](https://deepseek.stream/upload) · [📚 开发指南](https://deepseek.stream/guide) · [💬 ZeroClave 社区](https://zeroclave.com/community)
 
@@ -219,8 +219,8 @@ GitHub Actions 会在 `main`、`alpha` push、Pull Request 和手动运行时执
 正式发布时，先确认 `package.json` 和 `plugin.json` 版本一致，再创建同版本标签：
 
 ```bash
-git tag -a v0.1.0-alpha.24 -m "Release v0.1.0-alpha.24"
-git push origin v0.1.0-alpha.24
+git tag -a v0.1.0-alpha.25 -m "Release v0.1.0-alpha.25"
+git push origin v0.1.0-alpha.25
 ```
 
 推送 `v*` 标签会触发 CI。所有检查通过后，Actions 会自动创建 GitHub Release，并附上 `.zip`、`.tgz` 和 SHA-256 校验文件。版本标签必须去掉 `v` 后与包版本完全一致。
