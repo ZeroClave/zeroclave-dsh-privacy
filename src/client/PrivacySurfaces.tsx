@@ -264,6 +264,7 @@ export function PrivacyDock({ controller, sessionId, t, useInput }: PrivacyDockP
   const result = live?.text === draft ? live.result : baseline
 
   useEffect(() => {
+    controller.setActiveSession(sessionId)
     const abort = new AbortController()
     const delay = snapshot.detectorMode === 'zeroclave'
       ? 650
@@ -595,23 +596,6 @@ function reviewLiveState(review: PrivacySnapshot['pendingSendReview']): PrivacyL
   const first = review?.parts[0]
   if (first === undefined) return undefined
   return { text: first.text, result: first.result, updatedAt: 0 }
-}
-
-function latestLiveState(snapshot: PrivacySnapshot, sessionId: string | undefined): {
-  sessionId: string | undefined
-  live: PrivacyLiveState | undefined
-} {
-  const current = sessionId === undefined ? undefined : snapshot.liveBySession.get(sessionId)
-  if (current !== undefined) return { sessionId, live: current }
-  let latestSessionId: string | undefined
-  let latest: PrivacyLiveState | undefined
-  for (const [candidateSessionId, candidate] of snapshot.liveBySession) {
-    if (latest === undefined || candidate.updatedAt > latest.updatedAt) {
-      latestSessionId = candidateSessionId
-      latest = candidate
-    }
-  }
-  return { sessionId: latestSessionId, live: latest }
 }
 
 function ruleErrorKey(code: RegexErrorCode): PrivacyKey { return `rules.error.${code}` }
@@ -957,13 +941,12 @@ function ModelView({ controller, snapshot, t }: {
 export function PrivacyDrawer({ controller, t, useSessions, sessions, conversation }: PrivacyDrawerProps): ReactNode {
   const snapshot = usePrivacy(controller)
   const drawerBodyRef = useRef<HTMLDivElement>(null)
-  const sessionId = useSessions(state => state.current)
-  const liveState = latestLiveState(snapshot, sessionId)
-  const live = liveState.live
+  const currentSessionId = useSessions(state => state.current)
   const review = snapshot.pendingSendReview
   const reviewLive = reviewLiveState(review)
+  const displayedSessionId = review?.sessionId ?? snapshot.activeSessionId ?? currentSessionId
+  const live = displayedSessionId === undefined ? undefined : snapshot.liveBySession.get(displayedSessionId)
   const displayedLive = reviewLive ?? live
-  const displayedSessionId = review?.sessionId ?? liveState.sessionId
   const [sending, setSending] = useState(false)
   const tabs: Array<[PrivacySnapshot['activeTab'], PrivacyKey]> = [
     ['audit', 'tab.audit'],
@@ -980,7 +963,7 @@ export function PrivacyDrawer({ controller, t, useSessions, sessions, conversati
       <header className={css.drawerHeader}>
         <div className={css.brandIdentity}>
           <img className={css.brandLogo} src={zeroclaveLogo} alt={t('brand')} />
-          <small>{sessionId ?? t('sessionFallback')}</small>
+          <small>{displayedSessionId ?? t('sessionFallback')}</small>
         </div>
         <div className={css.headerStatus}>
           <span data-enabled={snapshot.enabled || undefined}>{snapshot.enabled ? t('active') : t('paused')}</span>
@@ -1013,7 +996,7 @@ export function PrivacyDrawer({ controller, t, useSessions, sessions, conversati
           <DetectionView
             controller={controller}
             live={live}
-            sessionId={sessionId}
+            sessionId={displayedSessionId}
             t={t}
           />
         ) : null}
@@ -1032,14 +1015,14 @@ export function PrivacyDrawer({ controller, t, useSessions, sessions, conversati
               {t('review.confirmSend')}
             </button>
           </div>
-        ) : snapshot.activeTab === 'audit' && live?.result.findings.length !== 0 && sessionId !== undefined ? (
+        ) : snapshot.activeTab === 'audit' && live?.result.findings.length !== 0 && displayedSessionId !== undefined ? (
           <div className={css.drawerSendActions}>
             <button className={css.secondaryButton} type="button" onClick={() => { controller.setOpen(false) }}>
               {t('review.cancelSend')}
             </button>
             <button className={css.primaryButton} type="button" disabled={sending}
               onClick={() => {
-                const session = sessions.binding(sessionId)?.session
+                const session = sessions.binding(displayedSessionId)?.session
                 if (session === undefined || live === undefined) return
                 setSending(true)
                 const sendSession = (conversation as {
@@ -1050,7 +1033,7 @@ export function PrivacyDrawer({ controller, t, useSessions, sessions, conversati
                   .then((outcome: unknown) => {
                     if (typeof outcome !== 'object' || outcome === null || !('kind' in outcome)
                       || outcome.kind !== 'success') return
-                    const scope = sessions.scope(sessionId)
+                    const scope = sessions.scope(displayedSessionId)
                     const input = (conversation as {
                       input?: { for?: (target: object) => { setDraft(text: string): void } }
                     }).input

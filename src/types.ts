@@ -142,6 +142,7 @@ export interface PrivacySnapshot {
   activeTab: 'audit' | 'rules' | 'model'
   detectorMode: DetectorMode
   detectorStates: Readonly<Record<DetectorMode, DetectorRuntimeState>>
+  activeSessionId?: string
   liveBySession: ReadonlyMap<string, PrivacyLiveState>
   regexRules: readonly EditableRegexRule[]
   regexRevision: number

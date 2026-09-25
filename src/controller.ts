@@ -214,6 +214,10 @@ export class PrivacyController {
     this.update({ ...this.snapshot, open })
   }
   toggleOpen(): void { this.setOpen(!this.snapshot.open) }
+  setActiveSession(sessionId: string): void {
+    if (this.snapshot.activeSessionId === sessionId) return
+    this.update({ ...this.snapshot, activeSessionId: sessionId })
+  }
   setTab(activeTab: PrivacySnapshot['activeTab']): void { this.update({ ...this.snapshot, activeTab }) }
 
   setSendPolicy(sendPolicy: SendPolicy): void {

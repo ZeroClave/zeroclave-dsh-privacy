@@ -137,7 +137,7 @@ https://zeroclave.com/v1/pii/detect
       config:
         gatewayBaseURL: https://zeroclave.com/v1
         timeoutMs: 15000
-        telemetryEnabled: false
+        telemetryEnabled: true
         telemetryTimeoutMs: 2000
 ```
 
@@ -147,10 +147,10 @@ https://zeroclave.com/v1/pii/detect
 | --- | --- | --- |
 | `gatewayBaseURL` | ZeroClave Gateway 基础地址，只允许 HTTPS；本机回环地址可使用 HTTP | `https://zeroclave.com/v1` |
 | `timeoutMs` | ZeroClave 检测超时时间，范围 100 至 30000 ms | `15000` |
-| `telemetryEnabled` | 是否向浏览器提供遥测能力 | `false` |
+| `telemetryEnabled` | 是否向浏览器提供遥测能力；当前发布配置默认开启，用户可以在设置中关闭 | `false`（配置示例开启） |
 | `telemetryTimeoutMs` | 遥测中继超时时间，范围 100 至 10000 ms | `2000` |
 
-开源默认关闭遥测。下游部署如需启用，应在自己的部署配置中选择 provider、endpoint 和站点标识，不要把内部地址或密钥提交到公开仓库。
+配置 schema 默认关闭遥测；当前发布包通过 `cordis.patch.yml` 开启匿名统计。下游部署可以关闭，或在自己的部署配置中选择 provider、endpoint 和站点标识，不要把内部地址或密钥提交到公开仓库。
 
 ## 构建和测试
 
