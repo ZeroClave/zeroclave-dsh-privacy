@@ -31,6 +31,10 @@
 - **失败可以继续**：检测失败或结果不完整时阻止发送，提供重试和明确切换本地正则的入口。
 - **本地恢复显示**：模型回复保留替换标记时，可通过当前浏览器保存的映射恢复对应内容。
 
+<p align="center">
+  <img src="docs/assets/privacy-review-dark.png" alt="ZeroClave 隐私检测与发送前审核界面" width="900">
+</p>
+
 适用于 DeepSeek Harness **网页版和桌面版内嵌 Web 界面**。当前版本为 alpha，兼容 DSH `0.1.3-alpha.1` 与 `0.2.0-rc.2`。
 
 ## 快速开始

@@ -31,6 +31,10 @@ Contracts, customer records, and configuration snippets can contain email addres
 - **Recover from failures:** Incomplete or failed detection blocks sending and offers a retry or an explicit switch to local regex detection.
 - **Restore placeholders locally:** If a model reply contains replacement tokens, the current browser can restore them using its locally stored mapping.
 
+<p align="center">
+  <img src="docs/assets/privacy-review-dark.png" alt="ZeroClave privacy detection and send review interface" width="900">
+</p>
+
 Works with the **DeepSeek Harness web app and desktop app's embedded web interface**. This is an alpha release, compatible with DSH `0.1.3-alpha.1` and `0.2.0-rc.2`.
 
 ## Quick start
