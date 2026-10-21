@@ -844,6 +844,9 @@ function ModelView({ controller, snapshot, t }: {
   const embeddedState = snapshot.detectorStates.embedded
   const zeroClaveState = snapshot.detectorStates.zeroclave
   const [telemetryDetailsOpen, setTelemetryDetailsOpen] = useState(false)
+  const [gatewayDraft, setGatewayDraft] = useState(snapshot.gatewayEndpoint)
+  const [gatewayError, setGatewayError] = useState(false)
+  useEffect(() => { setGatewayDraft(snapshot.gatewayEndpoint); setGatewayError(false) }, [snapshot.gatewayEndpoint])
   const telemetryStatus: PrivacyKey = snapshot.telemetry.lockedByGpc ? 'telemetry.gpc'
     : snapshot.telemetry.availability === 'checking' ? 'telemetry.checking'
       : snapshot.telemetry.availability === 'unavailable' ? 'telemetry.unavailable'
@@ -918,7 +921,7 @@ function ModelView({ controller, snapshot, t }: {
           <button
             className={css.primaryButton}
             type="button"
-            disabled={zeroClaveState.status === 'loading'}
+            disabled={zeroClaveState.status === 'loading' || gatewayDraft.trim() !== snapshot.gatewayEndpoint}
             onClick={() => { void controller.testZeroClave() }}
           >
             {zeroClaveState.status === 'loading'
@@ -927,6 +930,37 @@ function ModelView({ controller, snapshot, t }: {
                 ? t('model.test')
                 : t('model.testAgain')}
           </button>
+          <div className={css.gatewayConfig}>
+            <label className={css.gatewayField}>
+              <span>{t('model.endpoint')}</span>
+              <input
+                type="url"
+                value={gatewayDraft}
+                placeholder={t('model.endpointPlaceholder')}
+                autoComplete="url"
+                spellCheck={false}
+                onChange={event => { setGatewayDraft(event.currentTarget.value); setGatewayError(false) }}
+              />
+            </label>
+            <div className={css.gatewayControls}>
+              <button
+                className={css.secondaryButton}
+                type="button"
+                disabled={gatewayDraft.trim() === snapshot.gatewayEndpoint}
+                onClick={() => {
+                  try {
+                    controller.setGatewayEndpoint(gatewayDraft)
+                    setGatewayDraft(controller.getSnapshot().gatewayEndpoint)
+                    setGatewayError(false)
+                  } catch {
+                    setGatewayError(true)
+                  }
+                }}
+              >{t('model.endpointSave')}</button>
+              <small>{t('model.endpointHelp')}</small>
+            </div>
+            {gatewayError ? <small className={css.gatewayError} role="alert">{t('model.endpointInvalid')}</small> : null}
+          </div>
           <small>{t('model.gatewayRoute')}</small>
           {zeroClaveState.status === 'partial'
             ? <p className={css.partialWarning}>{t('model.partialDetail')}</p>

@@ -1369,8 +1369,60 @@
 
 .modelActions > code,
 .modelActions > .partialWarning,
-.modelActions > .requestId {
+.modelActions > .requestId,
+.modelActions > .gatewayConfig {
   grid-column: 1 / -1;
+}
+
+.gatewayConfig {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 6px;
+  background: var(--dsw-alias-bg-base);
+}
+
+.gatewayField {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.gatewayField > span,
+.gatewayControls > small,
+.gatewayError {
+  color: var(--dsw-alias-label-secondary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.gatewayField input {
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 5px;
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-bg-base);
+  font: inherit;
+  font-size: 12px;
+}
+
+.gatewayField input:focus {
+  border-color: #0ca66d;
+  outline: none;
+}
+
+.gatewayControls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gatewayError {
+  color: #b3261e;
 }
 
 .modelActions > code {

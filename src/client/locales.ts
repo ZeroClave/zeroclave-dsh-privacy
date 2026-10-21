@@ -40,6 +40,7 @@ export type PrivacyKey =
   | 'model.error' | 'model.unconfigured' | 'model.load' | 'model.retry'
   | 'model.untested' | 'model.test' | 'model.testing' | 'model.testAgain'
   | 'model.gatewayRoute' | 'model.partialDetail' | 'model.requestId' | 'model.textOnly'
+  | 'model.endpoint' | 'model.endpointPlaceholder' | 'model.endpointSave' | 'model.endpointHelp' | 'model.endpointInvalid'
   | 'model.download'
   | 'model.embeddedNotice'
   | 'telemetry.title' | 'telemetry.summary' | 'telemetry.consent' | 'telemetry.on' | 'telemetry.off'
@@ -221,6 +222,11 @@ export const zh: Record<PrivacyKey, string> = {
   'model.test': '测试连接',
   'model.testing': '正在测试',
   'model.testAgain': '重新测试',
+  'model.endpoint': 'ZeroClave 本地网关地址（可选）',
+  'model.endpointPlaceholder': 'http://192.168.1.20:8080/v1',
+  'model.endpointSave': '保存地址',
+  'model.endpointHelp': '留空使用 DSH Host 管理员配置的默认网关（默认未配置）。自定义仅支持本机或私有 IPv4 地址（如 192.168.x.x），且 DSH Host 必须能访问该地址。地址保存在当前浏览器；测试连接只发送合成样本。',
+  'model.endpointInvalid': '地址无效。自定义地址仅支持本机或私有 IPv4 网关；不能包含账号、查询参数、片段或其他路径。',
   'model.gatewayRoute': '匿名接口，无需 API Key；请求由当前 DSH Host 转发。测试连接只发送固定合成样本（demo@example.com），不发送当前草稿。',
   'model.partialDetail': '服务返回了不完整结果。部分实体即使为空也不能视为安全，发送会保持阻止状态。',
   'model.requestId': '请求 ID',
@@ -443,6 +449,11 @@ export const en: Record<PrivacyKey, string> = {
   'model.test': 'Test connection',
   'model.testing': 'Testing',
   'model.testAgain': 'Test again',
+  'model.endpoint': 'ZeroClave local Gateway URL (optional)',
+  'model.endpointPlaceholder': 'http://192.168.1.20:8080/v1',
+  'model.endpointSave': 'Save URL',
+  'model.endpointHelp': 'Leave blank to use the DSH Host administrator-configured default (unset by default). Custom URLs support loopback or private IPv4 addresses (such as 192.168.x.x); the DSH Host must be able to reach the address. The URL is stored in this browser; connection tests send only a synthetic sample.',
+  'model.endpointInvalid': 'Invalid URL. Custom URLs must use a loopback or private IPv4 Gateway and cannot include credentials, query parameters, fragments, or other paths.',
   'model.gatewayRoute': 'Anonymous endpoint with no API key; requests are forwarded by this DSH Host. The connection test sends only a fixed synthetic sample (demo@example.com), never the current draft.',
   'model.partialDetail': 'The service returned an incomplete result. Even an empty entity list is not safe to assume, and sending remains blocked.',
   'model.requestId': 'Request ID',

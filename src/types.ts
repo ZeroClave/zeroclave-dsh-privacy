@@ -147,6 +147,7 @@ export interface PrivacySnapshot {
   open: boolean
   activeTab: 'audit' | 'rules' | 'model'
   detectorMode: DetectorMode
+  gatewayEndpoint: string
   detectorStates: Readonly<Record<DetectorMode, DetectorRuntimeState>>
   activeSessionId?: string
   liveBySession: ReadonlyMap<string, PrivacyLiveState>

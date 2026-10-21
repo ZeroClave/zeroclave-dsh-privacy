@@ -173,6 +173,66 @@ describe('ZeroClave anonymous detection proxy', () => {
     expect(requestURL(calledURL)).toBe('https://gateway.example/v1/pii/detect')
   })
 
+  it('uses a validated custom private-network Gateway without forwarding its override header', async () => {
+    const upstream = vi.fn<typeof fetch>(async (_input, init) => {
+      expect([...new Headers(init?.headers).keys()].sort()).toEqual(['content-type', 'x-request-id'])
+      return new Response('{}')
+    })
+    await invoke(upstream, {
+      headers: {
+        'content-type': 'application/json',
+        'x-zeroclave-gateway-url': 'http://192.168.1.20:8080/v1',
+      },
+      body: '{}',
+    })
+    const calledURL = upstream.mock.calls[0]?.[0]
+    if (calledURL === undefined) throw new Error('Upstream was not called')
+    expect(requestURL(calledURL)).toBe('http://192.168.1.20:8080/v1/pii/detect')
+  })
+
+  it('rejects non-local overrides and reports an unconfigured default before forwarding', async () => {
+    const upstream = vi.fn<typeof fetch>()
+    const invalid = await invoke(upstream, {
+      headers: {
+        'content-type': 'application/json',
+        'x-zeroclave-gateway-url': 'http://192.0.2.10/v1',
+      },
+      body: '{}',
+    })
+    expect(invalid.status).toBe(400)
+    expect(JSON.parse(invalid.body.toString('utf8'))).toMatchObject({
+      error: { code: 'invalid_endpoint' },
+    })
+
+    const publicOverride = await invoke(upstream, {
+      headers: {
+        'content-type': 'application/json',
+        'x-zeroclave-gateway-url': 'https://gateway.example/v1',
+      },
+      body: '{}',
+    })
+    expect(publicOverride.status).toBe(400)
+
+    const arbitraryPath = await invoke(upstream, {
+      headers: {
+        'content-type': 'application/json',
+        'x-zeroclave-gateway-url': 'http://192.168.1.20/admin',
+      },
+      body: '{}',
+    })
+    expect(arbitraryPath.status).toBe(400)
+
+    const unconfigured = await invoke(upstream, {
+      config: { gatewayBaseURL: '' },
+      body: '{}',
+    })
+    expect(unconfigured.status).toBe(503)
+    expect(JSON.parse(unconfigured.body.toString('utf8'))).toMatchObject({
+      error: { code: 'gateway_unconfigured' },
+    })
+    expect(upstream).not.toHaveBeenCalled()
+  })
+
   it('rejects unsupported media and oversized bodies before contacting the Gateway', async () => {
     const upstream = vi.fn<typeof fetch>()
 

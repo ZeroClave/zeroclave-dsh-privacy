@@ -7,6 +7,7 @@ import {
 } from './regex-rules.ts'
 import type { RegexExecutor } from './regex-rules.ts'
 import { ZeroClaveDetectError, ZeroClaveDetector } from './zeroclave-detector.ts'
+import { normalizeGatewayBaseURL } from './gateway-url.ts'
 import { PrivacyTelemetry } from './telemetry.ts'
 import type { TelemetryDetector, TelemetryEvent, TelemetryReporter } from './telemetry.ts'
 import type {
@@ -17,6 +18,7 @@ import type {
 const ENABLED_STORAGE_KEY = 'zeroclave.privacy.enabled'
 const SEND_POLICY_STORAGE_KEY = 'zeroclave.privacy.send-policy'
 const DETECTOR_STORAGE_KEY = 'zeroclave.privacy.detector-mode'
+const GATEWAY_ENDPOINT_STORAGE_KEY = 'zeroclave.privacy.gateway-endpoint'
 const ZEROCLAVE_CONNECTION_TEST_TEXT = 'ZeroClave synthetic connection test: demo@example.com'
 
 export class SendReviewCancelledError extends Error {}
@@ -63,6 +65,14 @@ function storedDetector(): DetectorMode {
     const value = window.localStorage.getItem(DETECTOR_STORAGE_KEY)
     return value === 'embedded' || value === 'zeroclave' ? value : 'regex'
   } catch { return 'regex' }
+}
+
+function storedGatewayEndpoint(): string {
+  if (typeof window === 'undefined') return ''
+  try {
+    const stored = window.localStorage.getItem(GATEWAY_ENDPOINT_STORAGE_KEY) ?? ''
+    return stored === '' ? '' : normalizeGatewayBaseURL(stored, { allowRemoteHttps: false })
+  } catch { return '' }
 }
 
 function storedEnabled(): boolean {
@@ -112,6 +122,7 @@ export class PrivacyController {
       availability: 'checking',
       lockedByGpc: this.telemetryReporter.lockedByGpc,
     } }
+    this.zeroclave.configureGatewayBaseURL(this.snapshot.gatewayEndpoint)
   }
   private readonly embedded = new EmbeddedModelDetector()
   private readonly storedRules = loadRegexRules()
@@ -130,6 +141,7 @@ export class PrivacyController {
     open: false,
     activeTab: 'audit',
     detectorMode: storedDetector(),
+    gatewayEndpoint: storedGatewayEndpoint(),
     detectorStates: {
       regex: { status: 'ready' },
       embedded: { status: 'idle' },
@@ -396,6 +408,25 @@ export class PrivacyController {
     this.preapproved = undefined
     try { window.localStorage.setItem(DETECTOR_STORAGE_KEY, detectorMode) } catch { /* In-memory selection still works. */ }
     this.update({ ...this.snapshot, detectorMode, liveBySession: new Map() })
+  }
+
+  setGatewayEndpoint(endpoint: string): void {
+    const normalized = endpoint.trim() === '' ? '' : normalizeGatewayBaseURL(endpoint, { allowRemoteHttps: false })
+    if (normalized === this.snapshot.gatewayEndpoint) return
+    this.cancelSendReview()
+    this.cancelActiveOperations()
+    this.preapproved = undefined
+    this.zeroclave.configureGatewayBaseURL(normalized)
+    try {
+      if (normalized === '') window.localStorage.removeItem(GATEWAY_ENDPOINT_STORAGE_KEY)
+      else window.localStorage.setItem(GATEWAY_ENDPOINT_STORAGE_KEY, normalized)
+    } catch { /* Keep the selected endpoint for this session if storage is unavailable. */ }
+    this.update({
+      ...this.snapshot,
+      gatewayEndpoint: normalized,
+      detectorStates: { ...this.snapshot.detectorStates, zeroclave: { status: 'idle' } },
+      liveBySession: new Map(),
+    })
   }
 
   scan(text: string): ScanResult {

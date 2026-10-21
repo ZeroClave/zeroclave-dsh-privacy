@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { normalizeGatewayBaseURL } from './gateway-url.ts'
 
 export const ZEROCLAVE_DETECT_PROXY_PATH = '/api/zeroclave-privacy/detect'
 export const MAX_DETECT_REQUEST_BODY_BYTES = 10 * 1024 * 1024
@@ -19,18 +20,8 @@ class RequestAbortedError extends Error {}
 class ResponseBodyTooLargeError extends Error {}
 class DetectorProxyTimeoutError extends Error {}
 
-function isLoopback(hostname: string): boolean {
-  return hostname === 'localhost' || hostname === '[::1]' || /^127(?:\.\d{1,3}){3}$/u.test(hostname)
-}
-
-function upstreamDetectURL(gatewayBaseURL: string): string {
-  const base = new URL(gatewayBaseURL)
-  if (base.protocol !== 'https:' && (base.protocol !== 'http:' || !isLoopback(base.hostname))) {
-    throw new Error('Gateway URL must use HTTPS unless it targets loopback')
-  }
-  if (base.username !== '' || base.password !== '' || base.search !== '' || base.hash !== '') {
-    throw new Error('Gateway URL must not contain credentials, query parameters, or a fragment')
-  }
+function upstreamDetectURL(gatewayBaseURL: string, allowRemoteHttps = true): string {
+  const base = new URL(normalizeGatewayBaseURL(gatewayBaseURL, { allowRemoteHttps }))
   const pathname = base.pathname.replace(/\/+$/u, '')
   base.pathname = /\/pii\/detect$/u.test(pathname)
     ? pathname
@@ -160,7 +151,8 @@ export function createDetectProxyHandler(
   config: DetectProxyConfig,
   fetchImpl: Fetch = fetch,
 ): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
-  const upstreamURL = upstreamDetectURL(config.gatewayBaseURL)
+  const configuredUpstreamURL = config.gatewayBaseURL.trim() === ''
+    ? '' : upstreamDetectURL(config.gatewayBaseURL)
   return async (req, res) => {
     const id = requestID(req.headers['x-request-id'])
 
@@ -181,6 +173,26 @@ export function createDetectProxyHandler(
     if (contentEncoding !== undefined && contentEncoding !== 'identity') {
       req.resume()
       sendJSON(res, 415, id, 'unsupported_media_type', 'Use an uncompressed UTF-8 JSON request body')
+      return
+    }
+
+    const gatewayHeader = req.headers['x-zeroclave-gateway-url']
+    let upstreamURL = configuredUpstreamURL
+    if (gatewayHeader !== undefined) {
+      if (typeof gatewayHeader !== 'string') {
+        req.resume()
+        sendJSON(res, 400, id, 'invalid_endpoint', 'Use one valid ZeroClave Gateway URL')
+        return
+      }
+      try { upstreamURL = upstreamDetectURL(gatewayHeader, false) } catch {
+        req.resume()
+        sendJSON(res, 400, id, 'invalid_endpoint', 'Use a loopback or private IPv4 Gateway URL')
+        return
+      }
+    }
+    if (upstreamURL === '') {
+      req.resume()
+      sendJSON(res, 503, id, 'gateway_unconfigured', 'Configure a ZeroClave Gateway URL before detection')
       return
     }
 

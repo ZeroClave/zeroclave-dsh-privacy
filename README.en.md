@@ -91,6 +91,7 @@ BERT is primarily designed for English; Local Regex is recommended for Chinese c
 
 - **Local detection:** Regex and Browser BERT do not upload message text to a detection service.
 - **ZeroClave API:** The DSH Host and Gateway can see the original text during detection. This is not an end-to-end encrypted browser-to-TEE channel.
+- **Use a local Gateway:** Under **Detection Settings → ZeroClave local Gateway URL**, enter a loopback or private IPv4 address such as `http://192.168.1.20:8080/v1`. The DSH Host must be able to reach that address. The URL is stored in this browser; detection requests are still forwarded by the Host. Clear it to use the Host administrator-configured default; no public Gateway is configured by default.
 - **Keep original text:** Any value you exempt from protection is sent to the model as-is; the interface clearly indicates this choice.
 - **Restoration mapping stays in the browser:** Preview tokens are kept in memory. After confirmation, the mapping is stored in the browser's IndexedDB. Changing browsers, devices, or site addresses, or clearing browser data, can make restoration unavailable.
 - **Coverage:** Protection applies to the standard message-send flow. Direct Host API calls, automation scripts, and send paths outside the composer are not fully covered.

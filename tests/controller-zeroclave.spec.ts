@@ -65,6 +65,34 @@ function telemetryReporter(report: TelemetryReporter['report']): TelemetryReport
 afterEach(() => { localStorage.clear() })
 
 describe('ZeroClave controller integration', () => {
+  it('persists a custom LAN Gateway and uses it for proxy detection and the synthetic test', async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (_url, init) => response(init, ['complete']))
+    const detector = new ZeroClaveDetector(undefined, 1_000, 0, {
+      fetch: fetchMock,
+      wait: () => Promise.resolve(),
+      random: () => 0,
+    })
+    const controller = new PrivacyController(new PrivacyVault(memoryStore()), undefined, detector)
+    controller.setGatewayEndpoint(' http://192.168.1.20:8080/v1/ ')
+
+    expect(controller.getSnapshot().gatewayEndpoint).toBe('http://192.168.1.20:8080/v1')
+    expect(localStorage.getItem('zeroclave.privacy.gateway-endpoint')).toBe('http://192.168.1.20:8080/v1')
+    await controller.testZeroClave()
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/zeroclave-privacy/detect')
+    expect(new Headers(fetchMock.mock.calls[0]?.[1]?.headers).get('x-zeroclave-gateway-url'))
+      .toBe('http://192.168.1.20:8080/v1')
+    expect(request(fetchMock.mock.calls[0]?.[1]).texts.map(item => item.text)).toEqual([
+      'ZeroClave synthetic connection test: demo@example.com',
+    ])
+  })
+
+  it('rejects insecure non-private custom Gateway URLs', () => {
+    const controller = new PrivacyController(new PrivacyVault(memoryStore()))
+    expect(() => controller.setGatewayEndpoint('http://gateway.example/v1')).toThrow()
+    expect(controller.getSnapshot().gatewayEndpoint).toBe('')
+  })
+
   it('tests the connection with fixed synthetic text instead of the current draft', async () => {
     const fetchMock = vi.fn<typeof fetch>(async (_url, init) => response(init, ['complete']))
     const controller = new PrivacyController(

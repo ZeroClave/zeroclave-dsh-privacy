@@ -1,4 +1,5 @@
 import { finalizeScan, type FindingCandidate } from './detector.ts'
+import { normalizeGatewayBaseURL } from './gateway-url.ts'
 import type {
   DetectorProvider, EntityType, FindingCategory, RiskLevel, ScanResult,
 } from './types.ts'
@@ -282,6 +283,7 @@ export class ZeroClaveDetector implements DetectorProvider {
   readonly label = 'ZeroClave API'
   readonly locality = 'remote' as const
   private endpoint: string
+  private gatewayBaseURL = ''
   private readonly internals: Required<ZeroClaveDetectorInternals>
 
   constructor(
@@ -295,6 +297,9 @@ export class ZeroClaveDetector implements DetectorProvider {
   }
 
   configure(endpoint: string): void { this.endpoint = normalizeEndpoint(endpoint) }
+  configureGatewayBaseURL(endpoint: string): void {
+    this.gatewayBaseURL = endpoint.trim() === '' ? '' : normalizeGatewayBaseURL(endpoint, { allowRemoteHttps: false })
+  }
   get endpointURL(): string { return this.endpoint }
   available(): boolean { return this.endpoint !== '' }
 
@@ -311,6 +316,7 @@ export class ZeroClaveDetector implements DetectorProvider {
     const fetchImpl = this.internals.fetch
     const callerSignal = signal ?? new AbortController().signal
     callerSignal.throwIfAborted()
+    const gatewayBaseURL = this.gatewayBaseURL
     const requestId = `dsh-${randomUUID()}`
     const startedAt = this.internals.now()
     let response: Response | undefined
@@ -328,7 +334,13 @@ export class ZeroClaveDetector implements DetectorProvider {
           credentials: this.endpoint.startsWith('/') ? 'same-origin' : 'omit',
           cache: 'no-store',
           referrerPolicy: 'no-referrer',
-          headers: { 'content-type': 'application/json', 'x-request-id': requestId },
+          headers: {
+            'content-type': 'application/json',
+            'x-request-id': requestId,
+            ...(this.endpoint === ZEROCLAVE_PROXY_PATH && gatewayBaseURL !== ''
+              ? { 'x-zeroclave-gateway-url': gatewayBaseURL }
+              : {}),
+          },
           body: JSON.stringify({ texts: inputs.map(({ id, revision, text }) => ({ id, revision, text })) }),
           signal: AbortSignal.any([callerSignal, timeout]),
         })

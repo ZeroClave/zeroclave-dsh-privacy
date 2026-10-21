@@ -25,7 +25,7 @@ export interface Config {
 }
 
 export const Config: z<Config> = z.object({
-  gatewayBaseURL: z.string().default('https://zeroclave.com/v1'),
+  gatewayBaseURL: z.string().default(''),
   timeoutMs: z.number().min(100).max(30_000).default(15_000),
   telemetryProvider: z.union(['zeroclave', 'plausible'] as const).default('zeroclave'),
   telemetryEnabled: z.boolean().default(false),
