@@ -56,6 +56,7 @@ export declare class PrivacyController {
     confirmSendReview(): void;
     cancelSendReview(): void;
     setDetectorMode(detectorMode: DetectorMode): void;
+    setGatewayEndpoint(endpoint: string): void;
     scan(text: string): ScanResult;
     saveRule(rule: EditableRegexRule): void;
     deleteRule(id: string): void;

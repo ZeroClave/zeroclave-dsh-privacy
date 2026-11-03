@@ -26,9 +26,11 @@ export declare class ZeroClaveDetector implements DetectorProvider {
     readonly label = "ZeroClave API";
     readonly locality: "remote";
     private endpoint;
+    private gatewayBaseURL;
     private readonly internals;
     constructor(endpoint?: string, timeoutMs?: number, retries?: number, internals?: ZeroClaveDetectorInternals);
     configure(endpoint: string): void;
+    configureGatewayBaseURL(endpoint: string): void;
     get endpointURL(): string;
     available(): boolean;
     scan(text: string, signal?: AbortSignal): Promise<ScanResult>;
